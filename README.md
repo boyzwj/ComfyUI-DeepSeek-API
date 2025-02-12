@@ -1,5 +1,8 @@
 # ComfyUI-DeepSeek-API
+
+这个节点主要用于调用deepseek等大语言模型API
 This is a node used to call the DeepSeek model and other LLM model APIs.
+
 
 这是一个多功能节点，具有以下特点：
 
