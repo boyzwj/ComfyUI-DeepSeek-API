@@ -1,0 +1,22 @@
+{
+  "models": [
+    {
+      "name": "无问DeepSeek-R1",
+      "model": "deepseek-r1",
+      "api_key": "",
+      "base_url": "https://cloud.infini-ai.com/maas/v1/"
+    },
+    {
+      "name": "无问DeepSeek-V3",
+      "model": "deepseek-v3",
+      "api_key": "",
+      "base_url": "https://cloud.infini-ai.com/maas/v1/"
+    },
+    {
+      "name": "DeepSeek官方Chat API",
+      "model": "deepseek-chat",
+      "api_key": "",
+      "base_url": "https://api.deepseek.com"
+    }
+  ]
+}
