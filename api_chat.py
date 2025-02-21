@@ -62,6 +62,7 @@ class DeepSeekChat:
             counter = 0
 
         counter += 1
+        counter = counter % 4294967295
 
         if counter % seed_life == 0:
             seed = random.randint(0, 4294967295)
