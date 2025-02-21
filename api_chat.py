@@ -49,17 +49,13 @@ class DeepSeekChat:
         if os.path.exists(state_file):
             with open(state_file, "r") as f:
                 state = json.load(f)
-                counter = state.get("counter", 0)
                 last_value = state.get("last_value", None)
                 last_prompt = state.get("last_prompt", None)
         else:
-            counter = 0
             last_value = None
 
-        counter += 1
-        counter = counter % 4294967295
-
-        if (counter % seed_life) != 0 and last_value:
+        # 如果seed_life不为 1, 且上一次的seed不为 0, 则返回上一次的结果
+        if (seed % seed_life) != 0 and last_value:
             return (last_value, last_prompt)
 
         random.seed(seed)
@@ -93,8 +89,10 @@ class DeepSeekChat:
 
             result = response.choices[0].message.content
 
-            state = {"counter": counter, "last_value": result,
-                     "last_prompt": user_prompt}
+            state = {
+                "last_value": result,
+                "last_prompt": user_prompt
+            }
             with open(state_file, "w") as f:
                 json.dump(state, f)
 
