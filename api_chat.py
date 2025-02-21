@@ -40,7 +40,7 @@ class DeepSeekChat:
         }
 
     RETURN_TYPES = ("STRING", "STRING")
-    RETURN_NAMES = ("LLM Response Output", "History JSON")
+    RETURN_NAMES = ("LLM Response Output", "Deepseek Prompt")
     CATEGORY = "LLM Remote/处理"
     FUNCTION = "process_chat"
 
@@ -88,8 +88,12 @@ class DeepSeekChat:
                 stream=False
             )
 
+            state = {"counter": counter}
+            with open(state_file, "w") as f:
+                json.dump(state, f)
+
             self.last_value = (
-                response.choices[0].message.content, json.dumps({"messages": []}))
+                response.choices[0].message.content, user_prompt)
             return self.last_value
         except Exception as e:
             raise RuntimeError(f"API调用失败: {str(e)}")
