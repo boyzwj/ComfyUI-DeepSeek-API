@@ -59,7 +59,7 @@ class DeepSeekChat:
         counter += 1
         counter = counter % 4294967295
 
-        if counter % seed_life != 0 and last_value:
+        if (counter % seed_life) != 0 and last_value:
             return (last_value, last_prompt)
 
         random.seed(seed)
@@ -76,7 +76,7 @@ class DeepSeekChat:
         chosen_word = random.choice(words)
 
         # 更新user_prompt
-        user_prompt = user_prompt + "," + chosen_word
+        user_prompt = user_prompt + chosen_word
 
         # 构建消息
         messages = self._build_messages(system_prompt, user_prompt)
