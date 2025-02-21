@@ -11,6 +11,7 @@ class DeepSeekChat:
     """
 
     def __init__(self):
+        self.last_value = None
         self.history = {}
 
     @classmethod
@@ -30,9 +31,8 @@ class DeepSeekChat:
                     "default": "20岁的女孩，黑色长发，3D渲染风格",
                     "multiline": True
                 }),
-                "seed_life": ("INT", {"default": 100, "min": 1}),
-                "enable_history": ("BOOLEAN", {"default": False}),
-                "max_history": ("INT", {"default": 10, "min": 5})
+                "seed": ("INT", {"default": 0, "min": 1, "max": 0xffffffff}),
+                "seed_life": ("INT", {"default": 1, "min": 1})
             },
             "optional": {
                 "history_json": ("STRING", {"default": None}),
@@ -45,12 +45,8 @@ class DeepSeekChat:
     CATEGORY = "LLM Remote/处理"
     FUNCTION = "process_chat"
 
-    def process_chat(self, api_config: Dict, system_prompt: str, addtion_prompt: str, user_prompt: str, seed_life: int,
-                     enable_history: bool, max_history: int,
-                     history_json: str = None, save_path: str = "./chat_history.json"):
-
+    def process_chat(self, api_config: Dict, system_prompt: str, addtion_prompt: str, user_prompt: str, seed: int, seed_life: int):
         state_file = "comfyui_seed_state.json"
-
         if os.path.exists(state_file):
             with open(state_file, "r") as f:
                 state = json.load(f)
@@ -66,6 +62,9 @@ class DeepSeekChat:
 
         if counter % seed_life == 0:
             seed = random.randint(0, 4294967295)
+        else:
+            if self.last_value:
+                return self.last_value
         random.seed(seed)
         # 初始化客户端
         client = OpenAI(
@@ -74,7 +73,6 @@ class DeepSeekChat:
         )
 
         # 解析历史记录
-        history = self._parse_history(history_json)
 
         # 从addtion_prompt中随机选择一个词
         words = addtion_prompt.split(',')
@@ -84,8 +82,7 @@ class DeepSeekChat:
         user_prompt = user_prompt + "," + chosen_word
 
         # 构建消息
-        messages = self._build_messages(
-            system_prompt, user_prompt, history, enable_history, max_history)
+        messages = self._build_messages(system_prompt, user_prompt)
 
         try:
             # API调用
@@ -97,67 +94,13 @@ class DeepSeekChat:
                 stream=False
             )
 
-            # 更新历史
-            new_history = self._update_history(
-                messages, response,
-                enable_history, max_history
-            )
-
-            # 保存历史记录
-            saved_path = self._save_history(
-                new_history, save_path, enable_history)
-
-            return (response.choices[0].message.content, json.dumps(new_history))
+            self.last_value = (
+                response.choices[0].message.content, json.dumps({"messages": []}))
+            return self.last_value
         except Exception as e:
             raise RuntimeError(f"API调用失败: {str(e)}")
 
-    def _parse_history(self, history_json: str) -> Dict:
-        """解析JSON格式的历史记录"""
-        if history_json and os.path.exists(history_json):
-            try:
-                with open(history_json, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except Exception as e:
-                print(f"历史记录加载失败，将使用空历史: {str(e)}")
-        return {"messages": []}
-
-    def _save_history(self, history: Dict, save_path: str, enable: bool) -> str:
-        """保存历史记录到JSON文件"""
-        if not enable:
-            return ""
-
-        try:
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            with open(save_path, "w", encoding="utf-8") as f:
-                json.dump(history, f, ensure_ascii=False, indent=2)
-            return save_path
-        except Exception as e:
-            print(f"历史记录保存失败: {str(e)}")
-            return ""
-
-    def _build_messages(self, system_prompt: str, user_prompt: str,
-                        history: Dict, enable: bool, max_keep: int):
+    def _build_messages(self, system_prompt: str, user_prompt: str):
         messages = [{"role": "system", "content": system_prompt}]
-
-        if enable and history:
-            messages += history.get("messages", [])[-max_keep*2:]
-
         messages.append({"role": "user", "content": user_prompt})
         return messages
-
-    def _update_history(self, messages: List, response, enable: bool, max_keep: int):
-        if not enable:
-            return {"messages": []}
-
-        new_messages = messages + [{
-            "role": "assistant",
-            "content": response.choices[0].message.content
-        }]
-
-        return {
-            "messages": new_messages[-max_keep*2:],
-            "config": {
-                "enable_history": enable,
-                "max_history": max_keep
-            }
-        }
