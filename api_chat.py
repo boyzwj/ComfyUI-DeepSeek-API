@@ -35,8 +35,7 @@ class DeepSeekChat:
                 "seed_life": ("INT", {"default": 1, "min": 1})
             },
             "optional": {
-                "history_json": ("STRING", {"default": None}),
-                "save_path": ("STRING", {"default": "./chat_history.json"})
+
             }
         }
 
