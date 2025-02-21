@@ -30,7 +30,7 @@ class DeepSeekChat:
                     "default": "20岁的女孩，黑色长发，3D渲染风格",
                     "multiline": True
                 }),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                "seed_life": ("INT", {"default": 100, "min": 1}),
                 "enable_history": ("BOOLEAN", {"default": False}),
                 "max_history": ("INT", {"default": 10, "min": 5})
             },
@@ -45,9 +45,27 @@ class DeepSeekChat:
     CATEGORY = "LLM Remote/处理"
     FUNCTION = "process_chat"
 
-    def process_chat(self, api_config: Dict, system_prompt: str, addtion_prompt: str, user_prompt: str, seed: int,
+    def process_chat(self, api_config: Dict, system_prompt: str, addtion_prompt: str, user_prompt: str, seed_life: int,
                      enable_history: bool, max_history: int,
                      history_json: str = None, save_path: str = "./chat_history.json"):
+
+        state_file = "comfyui_seed_state.json"
+
+        if os.path.exists(state_file):
+            with open(state_file, "r") as f:
+                state = json.load(f)
+                seed = state.get("seed", random.randint(0, 4294967295))
+                counter = state.get("counter", 0)
+
+        else:
+            seed = random.randint(0, 4294967295)
+            counter = 0
+
+        counter += 1
+
+        if counter % seed_life == 0:
+            seed = random.randint(0, 4294967295)
+        random.seed(seed)
         # 初始化客户端
         client = OpenAI(
             api_key=api_config["api_key"],
@@ -56,7 +74,6 @@ class DeepSeekChat:
 
         # 解析历史记录
         history = self._parse_history(history_json)
-        random.seed(seed)
 
         # 从addtion_prompt中随机选择一个词
         words = addtion_prompt.split(',')
