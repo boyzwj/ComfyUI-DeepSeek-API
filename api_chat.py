@@ -50,14 +50,17 @@ class DeepSeekChat:
             with open(state_file, "r") as f:
                 state = json.load(f)
                 counter = state.get("counter", 0)
+                last_value = state.get("last_value", None)
+                last_prompt = state.get("last_prompt", None)
         else:
             counter = 0
+            last_value = None
 
         counter += 1
         counter = counter % 4294967295
 
-        if counter % seed_life != 0 and self.last_value:
-            return self.last_value
+        if counter % seed_life != 0 and last_value:
+            return (last_value, last_prompt)
 
         random.seed(seed)
         # 初始化客户端
@@ -88,13 +91,14 @@ class DeepSeekChat:
                 stream=False
             )
 
-            state = {"counter": counter}
+            result = response.choices[0].message.content
+
+            state = {"counter": counter, "last_value": result,
+                     "last_prompt": user_prompt}
             with open(state_file, "w") as f:
                 json.dump(state, f)
 
-            self.last_value = (
-                response.choices[0].message.content, user_prompt)
-            return self.last_value
+            return (result, user_prompt)
         except Exception as e:
             raise RuntimeError(f"API调用失败: {str(e)}")
 
