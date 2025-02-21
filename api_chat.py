@@ -49,21 +49,16 @@ class DeepSeekChat:
         if os.path.exists(state_file):
             with open(state_file, "r") as f:
                 state = json.load(f)
-                seed = state.get("seed", random.randint(0, 4294967295))
                 counter = state.get("counter", 0)
-
         else:
-            seed = random.randint(0, 4294967295)
             counter = 0
 
         counter += 1
         counter = counter % 4294967295
 
-        if counter % seed_life == 0:
-            seed = random.randint(0, 4294967295)
-        else:
-            if self.last_value:
-                return self.last_value
+        if counter % seed_life != 0 and self.last_value:
+            return self.last_value
+
         random.seed(seed)
         # 初始化客户端
         client = OpenAI(
