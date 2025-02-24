@@ -3,6 +3,12 @@ import os
 from openai import OpenAI
 from typing import Dict, List
 import random
+import re
+
+
+def remove_think_tags_regex(text):
+    clean = re.compile(r'<think>.*?</think>', re.DOTALL)
+    return re.sub(clean, '', text)
 
 
 class DeepSeekChat:
@@ -88,6 +94,7 @@ class DeepSeekChat:
             )
 
             result = response.choices[0].message.content
+            result = remove_think_tags_regex(result)
 
             state = {
                 "last_value": result,
