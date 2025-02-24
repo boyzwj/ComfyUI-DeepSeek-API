@@ -17,6 +17,12 @@
       "model": "deepseek-chat",
       "api_key": "",
       "base_url": "https://api.deepseek.com"
+    },
+    {
+      "name": "英伟达Chat API",
+      "model": "deepseek-ai/deepseek-r1",
+      "api_key": "",
+      "base_url": "https://integrate.api.nvidia.com/v1"
     }
   ]
 }
